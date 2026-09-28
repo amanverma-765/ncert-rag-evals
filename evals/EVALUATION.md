@@ -158,6 +158,8 @@ Results reflect the full 282-question evaluation suite. All numbers are enforced
 * In the **clean tier**, moving from `bm25` (74.9%) to `hybrid` (87.0%) yields a massive **+12.1 point gain**, closing the vocabulary gap where student phrasing diverges from textbook prose.
 * In the **fragmented math tier**, dense vectors struggle on shredded equation tokens (`vector_parsed` achieves only 76.7% R@5, below BM25's 79.1%). However, LLM query expansion repairs the fragmented text structure, lifting accuracy to **93.0%**.
 
+![Corpus Tier Degradation](../docs/assets/tier_breakdown.png)
+
 ---
 
 ## 5. Statistical Mechanics & Paired Significance Testing
@@ -189,6 +191,8 @@ $$\text{SE}(\hat{\Delta}) = \frac{\sqrt{n_{01} + n_{10} - \frac{(n_{01} - n_{10}
 
 *Multiple testing context:* With five pre-specified hypotheses, applying a strict Bonferroni floor requires $p < 0.01$. The top three comparisons easily satisfy this criterion.
 
+![Paired McNemar Significance Testing](../docs/assets/mcnemar_discordance.png)
+
 ### 5.3 Qualitative Win/Loss Case Studies
 * **Why Dense Embeddings Beat BM25 (42 wins vs 20 losses):**
   * *Query:* *"Why do we feel tired after running fast?"*
@@ -213,6 +217,8 @@ Latencies were benchmarked serially across an 80-question sample on dedicated CP
 | `expansion_vector` | 93.8% | 4,625.3 ms | 2,210 ms | 8,110 ms | External Gemini API | External Network + Chroma |
 | `expansion_raw` | 93.8% | 4,585.2 ms | 2,190 ms | 7,950 ms | External Gemini API | External Network + Chroma |
 | `expansion_hybrid` | 96.2% | **4,708.8 ms** | 2,340 ms | 8,450 ms | External Gemini API | External Network + Hybrid |
+
+![Pareto Frontier: Retrieval Latency vs Accuracy](../docs/assets/pareto_frontier.png)
 
 ### 6.1 Latency Breakdown of `hybrid` (8.9 ms)
 * **Local Embedding Inference (`bge-small-en-v1.5` on CPU):** ~3.8 ms.

@@ -5,6 +5,7 @@
 [![Database: SQLite FTS5](https://img.shields.io/badge/lexical-SQLite_FTS5-green.svg)](https://www.sqlite.org/fts5.html)
 [![Vector Store: ChromaDB](https://img.shields.io/badge/vector_store-ChromaDB-orange.svg)](https://www.trychroma.com/)
 [![Embeddings: BGE-small](https://img.shields.io/badge/embeddings-BAAI%2Fbge--small--en--v1.5-yellow.svg)](https://huggingface.co/BAAI/bge-small-en-v1.5)
+[![Analysis: Jupyter Notebook](https://img.shields.io/badge/analysis-Jupyter_Notebook-F37626.svg?logo=jupyter)](evals/benchmark_analysis.ipynb)
 [![Tests: 92 passing](https://img.shields.io/badge/tests-92_passed-brightgreen.svg)](tests/)
 [![Code Style: Ruff](https://img.shields.io/badge/code_style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 
@@ -25,6 +26,10 @@ Rather than treating RAG as an arbitrary assembly of framework components, this 
 | **Baseline** | `bm25` | 75.5% | 3.5 ms | Fast, but struggles when student phrasing differs from textbook vocabulary. |
 
 **The Core Finding:** Fusing lexical search (`bm25`) with dense embeddings (`bge-small`) via Reciprocal Rank Fusion reaches **~87% R@5 at 8.9 milliseconds** with zero runtime model dependencies. Placing an LLM query rewriter on the critical path buys an additional **6.0 points of recall (p=0.0021)**, but inflates serving latency from single-digit milliseconds to **4.7 seconds**.
+
+![Pareto Frontier: Retrieval Latency vs Accuracy](docs/assets/pareto_frontier.png)
+
+*Figure 1: Median single-query CPU latency (log scale) vs. Recall@5 across all 8 retrieval strategies. The green dotted line marks the empirical Pareto frontier, isolating Hybrid RRF as the optimal sub-10ms operational sweet spot. Interactive exploration in [`evals/benchmark_analysis.ipynb`](evals/benchmark_analysis.ipynb).*
 
 ---
 
@@ -146,6 +151,10 @@ PDF extraction quality varies dramatically across STEM textbooks. Aggregating re
 
 *Note on statistical power:* At $n=43$ in the fragmented tier, a single question shifts the score by 2.3 percentage points. Interpret the math tier as a directional signal rather than a high-precision metric.
 
+![Corpus Tier Degradation](docs/assets/tier_breakdown.png)
+
+*Figure 2: Impact of document extraction quality across continuous prose (Biology, Chemistry) vs formula-shredded mathematics textbooks.*
+
 ---
 
 ### Which Differences are Real? (Paired Significance Testing)
@@ -163,6 +172,10 @@ $$\chi^2 = \frac{(|\text{wins}_B - \text{wins}_A| - 1)^2}{\text{wins}_A + \text{
 | `vector_parsed` over `vector_raw` | 84.4% $\rightarrow$ 83.3% | -1.1 | 12 / 15 | 0.7003 | [-4.7, +2.5] | **Undecided (Negative Result)** |
 
 *Five pre-specified tests sharing no multiple-comparison correction (Bonferroni threshold $p < 0.01$). A high p-value indicates the dataset cannot distinguish the arms, not that they are identical.*
+
+![Paired McNemar Significance Testing](docs/assets/mcnemar_discordance.png)
+
+*Figure 3: Net Recall@5 difference intervals and paired McNemar significance levels across 282 queries.*
 
 ---
 
@@ -239,13 +252,16 @@ ncert-rag-evals/
 │   ├── services/       # Embedder (BAAI/bge-small) and Chat completions client
 │   └── cli.py          # CLI entry points (build, search)
 ├── evals/
-│   ├── questions.py    # Query generation & ground truth formulation
-│   ├── metrics.py      # Recall@k, MRR, McNemar significance, Wilson CIs
-│   ├── run.py          # Benchmark runner (generates evals/REPORT.md)
-│   ├── cost.py         # Serial latency profiler
-│   ├── EVALUATION.md   # Comprehensive technical evaluation whitepaper
-│   └── REPORT.md       # Generated benchmark artifact
-└── tests/              # 92 unit and integration tests (including doc-match guards)
+│   ├── benchmark_analysis.ipynb # Interactive EDA & Matplotlib visualizations
+│   ├── generate_charts.py       # Script generating publication figures
+│   ├── questions.py             # Query generation & ground truth formulation
+│   ├── metrics.py               # Recall@k, MRR, McNemar significance, Wilson CIs
+│   ├── run.py                   # Benchmark runner (generates evals/REPORT.md)
+│   ├── cost.py                  # Serial latency profiler
+│   ├── EVALUATION.md            # Comprehensive technical evaluation whitepaper
+│   └── REPORT.md                # Generated benchmark artifact
+├── docs/assets/                 # Rendered visual figures & charts
+└── tests/                       # 92 unit and integration tests (including doc-match guards)
 ```
 
 Dependencies flow strictly in one direction: `core` $\leftarrow$ `ingest` $\rightarrow$ `store` $\leftarrow$ `retrieve` $\leftarrow$ `evals`.

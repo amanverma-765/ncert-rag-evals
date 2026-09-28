@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["pytest>=7.0", "ruff>=0.14"]
+dev = ["matplotlib>=3.9", "pytest>=7.0", "ruff>=0.14"]
 
 [project.scripts]
 ncert-rag = "ncert_rag.cli:main"
