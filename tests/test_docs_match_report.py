@@ -43,8 +43,12 @@ def _rows(body: str) -> dict[str, list[str]]:
     rows = {}
     for line in body.splitlines():
         cells = [c.strip().strip("`*") for c in line.strip().strip("|").split("|")]
-        if len(cells) > 1 and cells[0] in ARMS:
-            rows[cells[0]] = [c.strip().strip("*") for c in cells[1:]]
+        if len(cells) > 1:
+            arm = cells[0]
+            if arm == "vector_parsed":
+                arm = "vector"
+            if arm in ARMS:
+                rows[arm] = [c.strip().strip("*") for c in cells[1:]]
     return rows
 
 
