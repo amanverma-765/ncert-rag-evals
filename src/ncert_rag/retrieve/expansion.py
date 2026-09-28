@@ -12,11 +12,10 @@ the embeddings, or both.
 import sqlite3
 from collections.abc import Callable
 
-from ncert_rag.core.models import RetrievalHit
+from ncert_rag.retrieve.base import BaseRetriever, Retriever
 from ncert_rag.retrieve.bm25 import Bm25
 from ncert_rag.retrieve.hybrid import Hybrid
 from ncert_rag.retrieve.vector import Vector
-from ncert_rag.store import db
 
 # Terms only. Having the model draft a hypothetical answer passage retrieves
 # better but invents textbook prose that was never in the books, which a study
@@ -33,7 +32,7 @@ _INSTRUCTIONS = (
 QUERY_REWRITER = "ag/gemini-3.7-flash-medium"
 
 # What the rewritten query is handed to.
-BASES: dict[str, Callable[[sqlite3.Connection], object]] = {
+BASES: dict[str, Callable[[sqlite3.Connection], Retriever]] = {
     "bm25": Bm25,
     "vector": Vector,
     "raw": lambda conn: Vector(conn, source="raw"),
@@ -54,7 +53,7 @@ def clear_cache() -> None:
     _CACHE.clear()
 
 
-class Expansion:
+class Expansion(BaseRetriever):
     def __init__(self, conn: sqlite3.Connection, base: str = "bm25"):
         self.conn = conn
         self.name = f"expansion_{base}"
@@ -81,6 +80,3 @@ class Expansion:
 
     def search(self, question: str, k: int) -> list[tuple[int, float]]:
         return self.base.search(self.expand(question), k)
-
-    def retrieve(self, question: str, k: int) -> list[RetrievalHit]:
-        return db.hits(self.conn, self.search(question, k))

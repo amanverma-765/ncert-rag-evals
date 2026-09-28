@@ -7,8 +7,7 @@ seminiferous, SN2), which BM25 matches better than any embedding.
 import re
 import sqlite3
 
-from ncert_rag.core.models import RetrievalHit
-from ncert_rag.store import db
+from ncert_rag.retrieve.base import BaseRetriever
 
 _WORD = re.compile(r"[A-Za-z0-9]+")
 
@@ -40,7 +39,7 @@ def fts_query(question: str) -> str:
     return " OR ".join(f'"{term}"' for term in terms)
 
 
-class Bm25:
+class Bm25(BaseRetriever):
     name = "bm25"
 
     def __init__(self, conn: sqlite3.Connection):
@@ -60,6 +59,3 @@ class Bm25:
         # bm25() is negative with better matches more negative; flip it so every
         # arm reports higher-is-better
         return [(row["id"], -row["score"]) for row in rows]
-
-    def retrieve(self, question: str, k: int) -> list[RetrievalHit]:
-        return db.hits(self.conn, self.search(question, k))

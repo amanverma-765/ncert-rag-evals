@@ -6,12 +6,13 @@ Same model and same cleaned text, so the gap between them measures chunking.
 
 import sqlite3
 
-from ncert_rag.core.models import ChunkSource, RetrievalHit
+from ncert_rag.core.models import ChunkSource
+from ncert_rag.retrieve.base import BaseRetriever
 from ncert_rag.services import embedder
-from ncert_rag.store import db, vectors
+from ncert_rag.store import vectors
 
 
-class Vector:
+class Vector(BaseRetriever):
     def __init__(self, conn: sqlite3.Connection, source: ChunkSource = "parsed"):
         self.conn = conn
         self.source = source
@@ -19,6 +20,3 @@ class Vector:
 
     def search(self, question: str, k: int) -> list[tuple[int, float]]:
         return vectors.top_k(self.source, embedder.encode_query(question), k)
-
-    def retrieve(self, question: str, k: int) -> list[RetrievalHit]:
-        return db.hits(self.conn, self.search(question, k))

@@ -1,9 +1,11 @@
 """The retriever interface and the rank fusion the arms share."""
 
+import sqlite3
 from collections.abc import Sequence
 from typing import Protocol
 
 from ncert_rag.core.models import RetrievalHit
+from ncert_rag.store import db
 
 # Reciprocal rank fusion's damping constant. 60 is the value from the original
 # paper and nothing here is tuned against it.
@@ -23,6 +25,16 @@ class Retriever(Protocol):
     def search(self, question: str, k: int) -> list[tuple[int, float]]: ...
 
     def retrieve(self, question: str, k: int) -> list[RetrievalHit]: ...
+
+
+class BaseRetriever:
+    conn: sqlite3.Connection
+
+    def search(self, question: str, k: int) -> list[tuple[int, float]]:
+        raise NotImplementedError
+
+    def retrieve(self, question: str, k: int) -> list[RetrievalHit]:
+        return db.hits(self.conn, self.search(question, k))
 
 
 def rrf(rankings: Sequence[Sequence[int]], k: int) -> list[tuple[int, float]]:

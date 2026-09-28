@@ -2,18 +2,16 @@
 
 import sqlite3
 
-from ncert_rag.core.models import RetrievalHit
-from ncert_rag.retrieve.base import rrf
+from ncert_rag.retrieve.base import BaseRetriever, rrf
 from ncert_rag.retrieve.bm25 import Bm25
 from ncert_rag.retrieve.vector import Vector
-from ncert_rag.store import db
 
 # Fuse deeper than we return, so a chunk ranked 15th by one method and 3rd by
 # the other can still surface.
 _DEPTH = 30
 
 
-class Hybrid:
+class Hybrid(BaseRetriever):
     name = "hybrid"
 
     def __init__(self, conn: sqlite3.Connection):
@@ -27,6 +25,3 @@ class Hybrid:
             [cid for cid, _ in self.dense.search(question, _DEPTH)],
         ]
         return rrf(rankings, k)
-
-    def retrieve(self, question: str, k: int) -> list[RetrievalHit]:
-        return db.hits(self.conn, self.search(question, k))
