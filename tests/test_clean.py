@@ -4,7 +4,7 @@ Three of these once did nothing at all: `page_lines` cleans one line at a time,
 and a single line contains no newline for them to match against.
 """
 
-from ncert_rag.ingest.clean import (
+from ncert_rag.ingest.text.clean import (
     PAGE_EDGE,
     clean_text,
     is_page_number,

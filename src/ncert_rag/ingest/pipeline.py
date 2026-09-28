@@ -12,14 +12,14 @@ from pathlib import Path
 from ncert_rag.core.models import BookSpec
 from ncert_rag.core.paths import BOOKS_DIR
 from ncert_rag.core.registry import BOOKS
-from ncert_rag.ingest.chunk import from_pages, from_sections
 from ncert_rag.ingest.download import chapter_files, provision
-from ncert_rag.ingest.extract import page_lines, page_texts
-from ncert_rag.ingest.parse.cutoff import before, page_cut, pages_before
-from ncert_rag.ingest.parse.exercises import find as find_exercises
-from ncert_rag.ingest.parse.profile import find_marks, induce
-from ncert_rag.ingest.parse.resolver import book_offset, chapter_number
-from ncert_rag.ingest.parse.sections import split
+from ncert_rag.ingest.pdf import (
+    book_offset,
+    induce_profile,
+    page_lines,
+    parse_chapter,
+)
+from ncert_rag.ingest.text import from_pages, from_sections
 from ncert_rag.services import embedder
 from ncert_rag.store import db, vectors
 
@@ -38,24 +38,16 @@ def _build_book(conn: sqlite3.Connection, book: BookSpec) -> list[int]:
     """Parse one book into chunks and exercises. Returns printed chapter numbers."""
     files = chapter_files(BOOKS_DIR / book.slug)
     chapters = [page_lines(path) for path in files]
-    profile = induce(chapters[:_PROFILE_SAMPLE])
+    profile = induce_profile(chapters[:_PROFILE_SAMPLE])
 
     numbers = []
     for position, (path, lines) in enumerate(zip(files, chapters, strict=True), 1):
-        number = chapter_number(find_marks(lines, profile), position)
-        numbers.append(number)
+        parsed = parse_chapter(path, lines, profile, book.slug, position)
+        numbers.append(parsed.chapter)
 
-        questions, exercise_page = find_exercises(lines, number)
-        db.add_exercises(conn, book.slug, number, questions)
-
-        # the exercises stay out of the index, and both chunk sets lose the
-        # same pages so neither arm gains from the cut
-        cut = page_cut(lines, exercise_page)
-        sections = split(before(lines, cut), profile, book.slug, number)
-        pages = pages_before(page_texts(path), cut)
-
-        db.add_chunks(conn, from_sections(sections))
-        db.add_chunks(conn, from_pages(book.slug, number, pages))
+        db.add_exercises(conn, book.slug, parsed.chapter, parsed.exercises)
+        db.add_chunks(conn, from_sections(parsed.sections))
+        db.add_chunks(conn, from_pages(book.slug, parsed.chapter, parsed.pages))
 
     return numbers
 

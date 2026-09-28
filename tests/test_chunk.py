@@ -1,5 +1,5 @@
 from ncert_rag.core.models import Section
-from ncert_rag.ingest.chunk import (
+from ncert_rag.ingest.text.chunk import (
     _ENCODING,
     OVERLAP,
     TOKENS,

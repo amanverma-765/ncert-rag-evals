@@ -57,3 +57,13 @@ class RetrievalHit(BaseModel):
     page: int
     text: str
     score: float
+
+
+class ParsedChapter(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    book: str
+    chapter: int
+    sections: list[Section]
+    pages: list[str]
+    exercises: list[str]

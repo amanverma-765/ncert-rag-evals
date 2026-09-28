@@ -5,7 +5,7 @@ Joining spans directly welds words together; the plain extractor inserts a
 space where they do not abut, and this reproduces that.
 """
 
-from ncert_rag.ingest.extract import _SPAN_GAP, _join_spans
+from ncert_rag.ingest.pdf.extract import _SPAN_GAP, _join_spans
 
 
 def span(text: str, x0: float, x1: float) -> dict:

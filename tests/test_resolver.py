@@ -1,5 +1,4 @@
-from ncert_rag.ingest.parse.profile import Mark
-from ncert_rag.ingest.parse.resolver import book_offset, chapter_number
+from ncert_rag.ingest.pdf.parser import Mark, book_offset, chapter_number
 
 
 def marks(*numbers: str) -> list[Mark]:

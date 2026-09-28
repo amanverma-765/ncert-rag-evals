@@ -6,13 +6,14 @@ which hands us chapter count, order and page ranges for free. Never merge them.
 
 import subprocess
 from collections.abc import Iterable
+from pathlib import Path
 
 from ncert_rag.core.models import BookSpec
 from ncert_rag.core.paths import BOOKS_DIR
 from ncert_rag.core.registry import BOOKS
 
 
-def chapter_files(slug_dir) -> list:
+def chapter_files(slug_dir: Path) -> list[Path]:
     """chapter_NN.pdf, in printed order. prelims.pdf is not a chapter."""
     return sorted(slug_dir.glob("chapter_*.pdf"))
 

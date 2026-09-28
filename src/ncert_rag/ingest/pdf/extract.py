@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pymupdf
 
-from ncert_rag.ingest.clean import clean_text, strip_running_heads
+from ncert_rag.ingest.text.clean import clean_text, strip_running_heads
 
 _BOLD_MARKERS = ("Demi", "Bold", "Black", "Heavy")
 
