@@ -20,15 +20,6 @@ ROOT = Path(__file__).resolve().parents[1]
 README = ROOT / "README.md"
 EVALUATION = ROOT / "evals" / "EVALUATION.md"
 
-# Heading holding each accuracy table, per document. The serving-cost table
-# names the same arms with different columns, so tables are matched by the
-# section they sit in rather than by their rows.
-TABLES = [
-    ("All questions", "All questions (n=282)"),
-    ("Clean tier", "Clean tier, the 13 non-mathematics books (n=239)"),
-    ("Fragmented tier", "Fragmented tier, the four mathematics books (n=43)"),
-]
-
 R_AT_5 = 1  # cells are [R@1, R@5, R@10, MRR, n]
 N = 4
 
@@ -51,9 +42,9 @@ def _rows(body: str) -> dict[str, list[str]]:
     """{arm: cells} for every table row whose first cell names an arm."""
     rows = {}
     for line in body.splitlines():
-        cells = [cell.strip().strip("`") for cell in line.strip().strip("|").split("|")]
+        cells = [c.strip().strip("`*") for c in line.strip().strip("|").split("|")]
         if len(cells) > 1 and cells[0] in ARMS:
-            rows[cells[0]] = cells[1:]
+            rows[cells[0]] = [c.strip().strip("*") for c in cells[1:]]
     return rows
 
 
@@ -64,13 +55,33 @@ def _report(heading: str) -> dict[str, list[str]]:
     return rows
 
 
-@pytest.mark.parametrize(("in_report", "in_evaluation"), TABLES)
-def test_evaluation_tables_match_report(in_report: str, in_evaluation: str) -> None:
-    assert _rows(_sections(EVALUATION)[in_evaluation]) == _report(in_report)
+def _tier_summary(body: str) -> dict[str, list[str]]:
+    summary = {}
+    for line in body.splitlines():
+        cells = [c.strip().strip("`*") for c in line.strip().strip("|").split("|")]
+        if cells and cells[0] in ("clean", "fragmented"):
+            summary[cells[0]] = [c.strip().strip("*") for c in cells[1:]]
+    return summary
+
+
+def test_evaluation_accuracy_table_matches_report() -> None:
+    expected = _report("All questions")
+    assert _rows(_sections(EVALUATION)["4. Accuracy Results"]) == expected
+
+
+@pytest.mark.parametrize("tier", ["clean", "fragmented"])
+def test_evaluation_tier_summary_matches_report(tier: str) -> None:
+    report = _report(f"{tier.capitalize()} tier")
+    expected = [report[arm][R_AT_5] for arm in ("bm25", "hybrid", "expansion_hybrid")]
+    expected.append(report["bm25"][N])
+
+    summary = _tier_summary(_sections(EVALUATION)["Performance by Tier (R@5)"])
+    assert summary[tier] == expected
 
 
 def test_readme_full_comparison_matches_report() -> None:
-    assert _rows(_sections(README)["The full comparison"]) == _report("All questions")
+    expected = _report("All questions")
+    assert _rows(_sections(README)["Full Evaluation Results"]) == expected
 
 
 @pytest.mark.parametrize("tier", ["clean", "fragmented"])
@@ -80,11 +91,5 @@ def test_readme_tier_summary_matches_report(tier: str) -> None:
     expected = [report[arm][R_AT_5] for arm in ("bm25", "hybrid", "expansion_hybrid")]
     expected.append(report["bm25"][N])
 
-    body = _sections(README)["The two tiers"]
-    summary = {
-        cells[0]: cells[1:]
-        for line in body.splitlines()
-        if (cells := [c.strip().strip("`") for c in line.strip().strip("|").split("|")])
-        and cells[0] in ("clean", "fragmented")
-    }
+    summary = _tier_summary(_sections(README)["The Two Text Tiers"])
     assert summary[tier] == expected

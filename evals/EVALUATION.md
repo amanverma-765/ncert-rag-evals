@@ -119,6 +119,6 @@ The architectural gap is stark: model-free arms resolve in **single-digit millis
 
 If you are modifying this pipeline, beware of these methodological pitfalls that will silently invalidate your results:
 
-* **The Data Leak:** NCERT prints exercise questions *inside* the chapters. If you index these pages, the retriever just searches for the question's literal text instead of the educational explanation. This falsely spikes BM25 accuracy into the 90s. The pipeline specifically strips these pages (`parse/cutoff.py`) to prevent this.
+* **The Data Leak:** NCERT prints exercise questions *inside* the chapters. If you index these pages, the retriever just searches for the question's literal text instead of the educational explanation. This falsely spikes BM25 accuracy into the 90s. The pipeline specifically strips these pages (`ingest/pdf/parser.py`) to prevent this.
 * **The Self-Grading Rewriter:** If the LLM used to generate the test queries is the same model family used in the `expansion` arms, that arm gets an unfair ~11-point advantage because it perfectly predicts its own vocabulary.
 * **The Overzealous Rewriter:** When asking an LLM to rewrite a query for expansion, only ask for *search terms*. Asking the LLM to draft a hypothetical "answer passage" yields better recall, but pollutes the search with fabricated textbook prose that doesn't actually exist in the corpus.

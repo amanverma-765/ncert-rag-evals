@@ -90,7 +90,7 @@ Because every technique answers the same 282 questions, claims are tested using 
 Dependencies flow one way: `core` ← `ingest` → `store` ← `retrieve` ← `evals`.
 
 * **`core/`**: Pydantic models and the book registry (no internal imports).
-* **`ingest/`**: Pipeline to download, clean, parse, and chunk PDFs. Handles font gate induction, chapter number recovery, and exercise page cutoffs.
+* **`ingest/`**: Pipeline to download, clean, parse, and chunk PDFs. Subdivided into `ingest/pdf/` (layout extraction & structural parsing) and `ingest/text/` (normalization & token chunking).
 * **`store/`**: SQLite schema (FTS5 index) and Chroma collections.
 * **`retrieve/`**: The eight arms behind one `Retriever` protocol.
 * **`services/`**: Chat and embedding model integrations.
@@ -104,26 +104,29 @@ Dependencies flow one way: `core` ← `ingest` → `store` ← `retrieve` ← `e
 
 ## Reproducing the Numbers
 
-The four `expansion_*` arms and query generation require an LLM. Ensure your local 9router proxy is running (`http://localhost:20128/v1`) and `NINEROUTER_API_KEY` is set in `.env`.
+The 282 ground-truth queries are pre-generated and stored in `evals/questions.json`, so you do **not** need to regenerate them every run.
+
+The four `expansion_*` arms require an LLM. Ensure your local 9router proxy is running (`http://localhost:20128/v1`) and `NINEROUTER_API_KEY` is set in `.env`.
 
 ```bash
-uv run python -m evals.questions   # build query set -> questions.json
-uv run python -m evals.run         # score every arm -> evals/REPORT.md
+uv run python -m evals.run         # score every arm over questions.json -> evals/REPORT.md
 uv run python -m evals.cost        # latency benchmark -> appended to REPORT.md
 uv run pytest                      # run tests
 uv run ruff check                  # lint code
 
 ```
 
-To run offline without LLMs:
+To run offline without LLMs (evaluating model-free arms directly):
 
 ```bash
 uv run python -m evals.run --arms bm25,vector,vector_raw,hybrid --force
 
 ```
 
+*(Optional: only if you change the book catalog or want to redraw query wording with an LLM, run `uv run python -m evals.questions`)*
+
 ## ⚠️ Crucial Warning: The Exercise Data Leak
 
 **Do not index the exercise pages.** NCERT prints the exercise questions inside the chapter. Because our evaluation queries come from those exact exercises, leaving them in the index rewards the retriever for finding the *question itself* rather than the *explanation*.
 
-If left in, this leak inflates BM25's R@1 into the 90s and completely inverts the ranking of every arm. `parse/cutoff.py` exists solely to strip these pages out. Do not remove it.
+If left in, this leak inflates BM25's R@1 into the 90s and completely inverts the ranking of every arm. `ingest/pdf/parser.py` exists solely to strip these pages out. Do not remove it.
