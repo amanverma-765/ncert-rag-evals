@@ -68,6 +68,12 @@ def main(n: int) -> None:
 
 
 def _append_report(rows: list[Row], n: int) -> None:
+    content = REPORT_PATH.read_text()
+    if "\n## Serving cost\n" in content:
+        content = content.split("\n## Serving cost\n")[0]
+    elif content.startswith("## Serving cost\n"):
+        content = ""
+
     lines = [
         "",
         "## Serving cost",
@@ -90,7 +96,7 @@ def _append_report(rows: list[Row], n: int) -> None:
         "query cannot be read off this table. See EVALUATION.md §6.",
     ]
 
-    REPORT_PATH.write_text(REPORT_PATH.read_text() + "\n".join(lines) + "\n")
+    REPORT_PATH.write_text(content.rstrip() + "\n" + "\n".join(lines) + "\n")
     print(f"\nAppended serving cost to {REPORT_PATH}")
 
 

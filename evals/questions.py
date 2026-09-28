@@ -10,6 +10,7 @@ stripped out. So the query set holds the reworded version only.
 import json
 import random
 import re
+import sqlite3
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -43,7 +44,7 @@ _INSTRUCTIONS = (
 _MARKUP = re.compile(r"\*+")
 
 
-def _candidates(conn) -> list[tuple[str, int, str]]:
+def _candidates(conn: sqlite3.Connection) -> list[tuple[str, int, str]]:
     """Exercise questions with an unambiguous chapter label.
 
     Computer Science and Informatics Practices share whole chapters, so some
@@ -122,7 +123,8 @@ def generate(regenerate: bool = False) -> None:
     books = len({book for book, _chapter, _q in picked})
     print(f"{len(picked)} exercise questions across {books} books")
 
-    kept = {} if regenerate else {q["id"]: q["question"] for q in _existing()}
+    existing = load() if QUESTIONS_PATH.exists() else []
+    kept = {} if regenerate else {q["id"]: q["question"] for q in existing}
     if kept:
         print(f"Reusing {len(kept)} existing wordings; pass --regenerate to redraw")
 
@@ -166,10 +168,6 @@ def generate(regenerate: bool = False) -> None:
 
 def load() -> list[dict]:
     return json.loads(QUESTIONS_PATH.read_text())
-
-
-def _existing() -> list[dict]:
-    return load() if QUESTIONS_PATH.exists() else []
 
 
 if __name__ == "__main__":

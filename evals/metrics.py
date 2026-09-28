@@ -23,10 +23,10 @@ CONFIDENCE = 1.96
 
 def first_hit(ranked: Sequence[Label], gold: Label) -> int | None:
     """1-based rank of the first chunk from the gold chapter, if any."""
-    for position, label in enumerate(ranked, start=1):
-        if label == gold:
-            return position
-    return None
+    return next(
+        (pos for pos, label in enumerate(ranked, start=1) if label == gold),
+        None,
+    )
 
 
 @dataclass(frozen=True, slots=True)
