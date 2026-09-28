@@ -10,6 +10,7 @@ chunking strategy alone.
 
 import sqlite3
 from collections.abc import Iterable, Sequence
+from pathlib import Path
 
 from ncert_rag.core.models import BookSpec, Chunk, RetrievalHit
 from ncert_rag.core.paths import DB_PATH
@@ -40,10 +41,12 @@ CREATE TABLE IF NOT EXISTS exercises (
     chapter  INTEGER NOT NULL,
     question TEXT NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_chunks_source ON chunks(source);
+CREATE INDEX IF NOT EXISTS idx_chunks_book_source ON chunks(book, source);
 """
 
 
-def connect(path=DB_PATH) -> sqlite3.Connection:
+def connect(path: Path = DB_PATH) -> sqlite3.Connection:
     """Open the corpus.
 
     The default same-thread guard stays on. One connection cannot serve
