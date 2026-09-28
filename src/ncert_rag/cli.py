@@ -27,7 +27,16 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "build":
-        books = [BY_SLUG[slug] for slug in args.book] if args.book else list(BOOKS)
+        if args.book:
+            invalid = [slug for slug in args.book if slug not in BY_SLUG]
+            if invalid:
+                parser.error(
+                    f"Unknown book slug(s): {', '.join(invalid)}. "
+                    f"Valid slugs: {', '.join(sorted(BY_SLUG))}"
+                )
+            books = [BY_SLUG[slug] for slug in args.book]
+        else:
+            books = list(BOOKS)
         build(books, rebuild=args.rebuild)
         return
 
